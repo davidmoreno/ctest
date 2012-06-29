@@ -46,15 +46,15 @@
  * - FAIL_IF_NOT_STRSTR(A,B)
  */
 
-int failures=0;
-int successes=0;
+static int failures=0;
+static int successes=0;
 
-int local_failures=0;
-int local_successes=0;
-
+static int local_failures=0;
+static int local_successes=0;
+static int ctest_log=0;
 
 #ifndef ERROR
-static const char *__BASENAME__="please set the START() macro at main()";
+static const char * __attribute__((unused)) __BASENAME__="please set the START() macro at main()";
 # define USE__BASENAME
 # define ERROR(...) { fprintf(stderr, "%s:%d ERROR ",__BASENAME__,__LINE__); fprintf(stderr, __VA_ARGS__); fprintf(stderr,"\n"); }
 #endif
@@ -62,14 +62,16 @@ static const char *__BASENAME__="please set the START() macro at main()";
 # define INFO(...) { fprintf(stderr, "%s:%d INFO ",__BASENAME__,__LINE__); fprintf(stderr, __VA_ARGS__); fprintf(stderr,"\n"); }
 #endif
 
+#define LOG(...) { if (ctest_log) { fprintf(stderr, "CTEST %s:%d ",__BASENAME__,__LINE__); fprintf(stderr, __VA_ARGS__); fprintf(stderr,"\n"); } }
+
 #ifdef __cplusplus
 #include <exception>
-#define INIT_LOCAL() { local_failures=local_successes=0; } try{
+#define INIT_LOCAL() { local_failures=local_successes=0; LOG("start %s",__FUNCTION__); } try{
 #define END_LOCAL() } catch(const std::exception &e){ FAIL("An exeption was catched, execution of this test aborted: %s",e.what()); } \
                     catch(...){ FAIL("An exeption was catched, execution of this test aborted"); } \
                     { INFO("%s ends: %d succeses / %d failures",__FUNCTION__,local_successes,local_failures); failures+=local_failures; successes+=local_successes; }
 #else
-#define INIT_LOCAL() { local_failures=local_successes=0; }
+#define INIT_LOCAL() { local_failures=local_successes=0; LOG("start %s",__FUNCTION__); }
 #define END_LOCAL() { INFO("%s ends: %d succeses / %d failures\n",__FUNCTION__,local_successes,local_failures); failures+=local_failures; successes+=local_successes; }
 #endif
 
@@ -77,14 +79,14 @@ static const char *__BASENAME__="please set the START() macro at main()";
 #define END_TEST END_LOCAL
 
 #ifdef USE__BASENAME
-#define START() { __BASENAME__=basename((char*)__FILE__); }
+#define START() { __BASENAME__=basename((char*)__FILE__); ctest_log=getenv("CTEST_LOG")!=NULL; }
 #else
 #define START() {  }
 #endif
 #define END() { INFO("TOTAL: %d succeses / %d failures\n",successes,failures); exit(failures); }
 
-#define FAIL(...) { ERROR(__VA_ARGS__); local_failures++; }
-#define SUCCESS() { local_successes++;  }
+#define FAIL(...) { ERROR(__VA_ARGS__); local_failures++; LOG("fail"); }
+#define SUCCESS() { local_successes++; LOG("ok"); }
 
 #define FAIL_IF(v) if (v){ FAIL("FAIL IF %s",#v); } else { SUCCESS(); }
 #define FAIL_IF_NOT(v) if ( !(v) ){ FAIL("FAIL IF NOT %s",#v); } else { SUCCESS(); }
@@ -93,15 +95,15 @@ static const char *__BASENAME__="please set the START() macro at main()";
 #define FAIL_IF_EQUAL(A,B) if ((A)==(B)){ FAIL("FAIL IF EQUAL %s == %s",#A,#B); } else { SUCCESS(); }
 #define FAIL_IF_NOT_EQUAL(A,B) if ((A)!=(B)){ FAIL("FAIL IF NOT EQUAL %s != %s",#A,#B); } else { SUCCESS(); }
 
-#define FAIL_IF_EQUAL_INT(A,B) if ((A)==(B)){ FAIL("FAIL IF EQUAL %s == %s, %d == %d",#A,#B,A,B); } else { SUCCESS(); }
-#define FAIL_IF_NOT_EQUAL_INT(A,B) if ((A)!=(B)){ FAIL("FAIL IF NOT EQUAL %s != %s, %d == %d",#A,#B,A,B); } else { SUCCESS(); }
+#define FAIL_IF_EQUAL_INT(A,B) { int a=(A), b=(B); if (a==b){ FAIL("FAIL IF EQUAL %s == %s, %d == %d",#A,#B,a,b); } else { SUCCESS(); } }
+#define FAIL_IF_NOT_EQUAL_INT(A,B) { int a=(A), b=(B);  if (a!=b){ FAIL("FAIL IF NOT EQUAL %s != %s, %d != %d",#A,#B,a,b); } else { SUCCESS(); } }
 
 #define FAIL_IF_EQUAL_STR(A,B) { const char *a=(A); const char *b=(B); if ((a == b) || ((a && b) && strcmp(a,b)==0)){ FAIL("FAIL IF EQUAL STR %s == %s (\"%s\" == \"%s\")",#A,#B,a,b); } else { SUCCESS(); } }
 #define FAIL_IF_NOT_EQUAL_STR(A,B) { const char *a=(A); const char *b=(B); if ((a!=b) && ((!a || !b) || strcmp(a,b)!=0)){ FAIL("FAIL IF NOT EQUAL STR %s != %s (\"%s\" != \"%s\")",#A,#B,a,b); } else { SUCCESS(); } }
 
 #ifdef __cplusplus
 #define FAIL_IF_EQUAL_STRING(A,B) { std::string a=A; std::string b=B; if (a == b){ FAIL("FAIL IF EQUAL STRING %s == %s (\"%s\" == \"%s\")",#A,#B,a.c_str(),b.c_str()); } else { SUCCESS(); } }
-#define FAIL_IF_NOT_EQUAL_STRING(A,B) { std::string a=A; std::string b=B; if (a != b){ FAIL("FAIL IF EQUAL STRING %s == %s (\"%s\" == \"%s\")",#A,#B,a.c_str(),b.c_str()); } else { SUCCESS(); } }
+#define FAIL_IF_NOT_EQUAL_STRING(A,B) { std::string a=A; std::string b=B; if (a != b){ FAIL("FAIL IF NOT EQUAL STRING %s != %s (\"%s\" != \"%s\")",#A,#B,a.c_str(),b.c_str()); } else { SUCCESS(); } }
 #endif
 
 #define FAIL_IF_STRSTR(A,B) { const char *a=(A); const char *b=(B); if (a==b || strstr(a,b)){ FAIL("FAIL IF STRSTR %s HAS %s (\"%s\" HAS \"%s\")",#A,#B,a,b); } else { SUCCESS(); } }
