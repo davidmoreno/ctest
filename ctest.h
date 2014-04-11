@@ -148,7 +148,7 @@ static const char * __attribute__((unused)) __BASENAME__="please set the START()
 #endif
 
 #define FAIL_IF_STRSTR(A,B) { const char *__a=(A); const char *__b=(B); if (__a==__b || strstr(__a,__b)){ FAIL("FAIL IF STRSTR %s HAS %s (\"%s\" HAS \"%s\")",#A,#B,__a,__b); } else { SUCCESS(); } }
-#define FAIL_IF_NOT_STRSTR(A,B) { const char *__a=(A); const char *__b=(B); if (((__a==NULL) && (__b==NULL)) || (!strstr(a,b))){ FAIL("FAIL IF NOT STRSTR %s HAS NOT %s (\"%s\" HAS NOT \"%s\")",#A,#B,__a,__b); } else { SUCCESS(); } }
+#define FAIL_IF_NOT_STRSTR(A,B) { const char *__a=(A); const char *__b=(B); if (((__a==NULL) && (__b==NULL)) || (!strstr(__a,__b))){ FAIL("FAIL IF NOT STRSTR %s HAS NOT %s (\"%s\" HAS NOT \"%s\")",#A,#B,__a,__b); } else { SUCCESS(); } }
 
 #ifdef __cplusplus
 #define FAIL_IF_EXCEPTION(A) { try{ A; SUCCESS(); } catch(const std::exception &e){ FAIL("FAIL IF EXCEPTION Exception raised: %s", e.what()); } catch(...){ FAIL("Exception raised"); } }
